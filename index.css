@@ -1,0 +1,37 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom Scrollbar for Studio Mode */
+.dark ::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+.dark ::-webkit-scrollbar-track {
+  background: #020617; /* Slate 950 */
+}
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155; /* Slate 700 */
+  border-radius: 5px;
+  border: 2px solid #020617; /* Slate 950 */
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569; /* Slate 600 */
+}
+
+/* Hide scrollbar but keep layout space */
+.scrollbar-hidden::-webkit-scrollbar {
+  visibility: hidden;
+  width: 10px; /* Must match visible scrollbar width to prevent layout shift */
+}
+.scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none; /* Firefox fallback might still shift, but Webkit is handled */
+}
+
+/* Utilities for Editor Overlay alignment */
+.editor-layer {
+  overflow-y: scroll; /* Force scrollbar track to exist */
+  overflow-x: hidden;
+  padding-right: 0; /* Let scrollbar take space */
+}
