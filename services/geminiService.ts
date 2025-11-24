@@ -6,12 +6,11 @@ export const streamCreativeSuggestion = async function* (
     systemInstruction: string, 
     lang: Language
 ): AsyncGenerator<string, void, unknown> {
-    // Access the API key inside the function to ensure we get the latest value
-    // after the user has performed the selection in the UI.
-    const apiKey = process.env.API_KEY;
+    // Use standard Vite environment variable access
+    const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
     
     if (!apiKey) {
-        throw new Error("API Key not found. Please connect your Google Cloud project.");
+        throw new Error("API Key not found. Please check configuration.");
     }
 
     const ai = new GoogleGenAI({ apiKey });

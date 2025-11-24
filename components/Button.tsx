@@ -2,7 +2,7 @@ import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'icon';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
   active?: boolean;
 }
 
@@ -26,7 +26,8 @@ export const Button: React.FC<ButtonProps> = ({
   const sizes = {
     sm: "h-8 px-3 text-xs",
     md: "h-10 px-4 py-2 text-sm",
-    lg: "h-12 px-6 text-base"
+    lg: "h-12 px-6 text-base",
+    icon: ""
   };
 
   const activeStyles = active ? "bg-gray-200 dark:bg-gray-700 text-indigo-600 dark:text-indigo-400" : "";

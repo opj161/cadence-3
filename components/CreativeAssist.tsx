@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, ArrowRight, X, Loader2, MessageSquarePlus, Music, Key } from 'lucide-react';
+import { Sparkles, ArrowRight, X, Loader2, MessageSquarePlus, Music } from 'lucide-react';
 import { Button } from './Button';
 import { streamCreativeSuggestion } from '../services/geminiService';
 import { Language } from '../types';
@@ -22,40 +22,17 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
   const [prompt, setPrompt] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   const [suggestion, setSuggestion] = useState('');
-  const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
+  // Default to true if env var exists, otherwise we need a way for user to input it
+  const [hasApiKey] = useState<boolean>(!!import.meta.env.VITE_GEMINI_API_KEY);
   
   // Auto-scroll to bottom of suggestion as it streams
   const suggestionRef = useRef<HTMLPreElement>(null);
-
-  useEffect(() => {
-    if (isOpen) {
-        checkApiKey();
-    }
-  }, [isOpen]);
 
   useEffect(() => {
     if (suggestionRef.current) {
         suggestionRef.current.scrollTop = suggestionRef.current.scrollHeight;
     }
   }, [suggestion]);
-
-  const checkApiKey = async () => {
-    if (window.aistudio) {
-        const hasKey = await window.aistudio.hasSelectedApiKey();
-        setHasApiKey(hasKey);
-    } else {
-        // Fallback for dev environments without the wrapper
-        setHasApiKey(true);
-    }
-  };
-
-  const handleConnectKey = async () => {
-      if (window.aistudio) {
-          await window.aistudio.openSelectKey();
-          // Small delay to allow state propagation, then recheck
-          setTimeout(checkApiKey, 500);
-      }
-  };
 
   // Helper: Extract the last meaningful word for rhyme lookups
   const getLastWord = (text: string): string => {
@@ -70,9 +47,8 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
   const handleGenerate = async (type: 'rhyme' | 'continue' | 'custom') => {
     if (isStreaming) return;
     
-    // Safety check for API Key before starting
-    if (hasApiKey === false) {
-        handleConnectKey();
+    if (!hasApiKey) {
+        setSuggestion("API Key missing. Please set VITE_GEMINI_API_KEY in build settings.");
         return;
     }
 
@@ -131,24 +107,20 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto p-5 space-y-8">
         
-        {/* API Key Gate */}
-        {hasApiKey === false && (
+        {/* API Key Warning */}
+        {!hasApiKey && (
             <div className="p-4 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg text-center space-y-3">
                 <div className="text-amber-600 dark:text-amber-500 font-medium text-sm">
                     API Key Required
                 </div>
                 <p className="text-xs text-amber-700 dark:text-amber-400">
-                    Connect a Google Cloud project to enable AI features.
+                    Set VITE_GEMINI_API_KEY in your environment to enable AI features.
                 </p>
-                <Button variant="secondary" size="sm" onClick={handleConnectKey} className="w-full gap-2">
-                    <Key className="w-3 h-3" />
-                    Connect Key
-                </Button>
             </div>
         )}
 
         {/* Quick Actions */}
-        <div className={`space-y-3 transition-opacity ${hasApiKey === false ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`space-y-3 transition-opacity ${!hasApiKey ? 'opacity-50 pointer-events-none' : ''}`}>
           <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
             Quick Actions
           </label>
@@ -184,7 +156,7 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
         </div>
 
         {/* Custom Prompt */}
-        <div className={`space-y-3 transition-opacity ${hasApiKey === false ? 'opacity-50 pointer-events-none' : ''}`}>
+        <div className={`space-y-3 transition-opacity ${!hasApiKey ? 'opacity-50 pointer-events-none' : ''}`}>
           <label className="text-[10px] font-bold uppercase tracking-widest text-gray-400 dark:text-gray-500">
             Custom Prompt
           </label>
