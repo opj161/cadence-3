@@ -1,0 +1,153 @@
+2025-11-24T23:09:29.3793397Z ##[debug]Starting: deploy
+2025-11-24T23:09:29.3823923Z ##[debug]Cleaning runner temp folder: /home/runner/work/_temp
+2025-11-24T23:09:29.3957144Z ##[debug]Starting: Set up job
+2025-11-24T23:09:29.3958157Z Current runner version: '2.329.0'
+2025-11-24T23:09:29.3978330Z ##[group]Runner Image Provisioner
+2025-11-24T23:09:29.3979051Z Hosted Compute Agent
+2025-11-24T23:09:29.3979528Z Version: 20251016.436
+2025-11-24T23:09:29.3980123Z Commit: 8ab8ac8bfd662a3739dab9fe09456aba92132568
+2025-11-24T23:09:29.3980794Z Build Date: 2025-10-15T20:44:12Z
+2025-11-24T23:09:29.3981307Z ##[endgroup]
+2025-11-24T23:09:29.3981783Z ##[group]Operating System
+2025-11-24T23:09:29.3982248Z Ubuntu
+2025-11-24T23:09:29.3982888Z 24.04.3
+2025-11-24T23:09:29.3983271Z LTS
+2025-11-24T23:09:29.3983752Z ##[endgroup]
+2025-11-24T23:09:29.3984178Z ##[group]Runner Image
+2025-11-24T23:09:29.3984651Z Image: ubuntu-24.04
+2025-11-24T23:09:29.3985164Z Version: 20251112.124.1
+2025-11-24T23:09:29.3986053Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20251112.124/images/ubuntu/Ubuntu2404-Readme.md
+2025-11-24T23:09:29.3987563Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20251112.124
+2025-11-24T23:09:29.3988321Z ##[endgroup]
+2025-11-24T23:09:29.3989323Z ##[group]GITHUB_TOKEN Permissions
+2025-11-24T23:09:29.3991174Z Contents: read
+2025-11-24T23:09:29.3991618Z Metadata: read
+2025-11-24T23:09:29.3992157Z Pages: write
+2025-11-24T23:09:29.3992741Z ##[endgroup]
+2025-11-24T23:09:29.3994911Z Secret source: Actions
+2025-11-24T23:09:29.3995579Z ##[debug]Primary repository: opj161/cadence-3
+2025-11-24T23:09:29.3996223Z Prepare workflow directory
+2025-11-24T23:09:29.4070280Z ##[debug]Creating pipeline directory: '/home/runner/work/cadence-3'
+2025-11-24T23:09:29.4074751Z ##[debug]Creating workspace directory: '/home/runner/work/cadence-3/cadence-3'
+2025-11-24T23:09:29.4076139Z ##[debug]Update context data
+2025-11-24T23:09:29.4080158Z ##[debug]Evaluating job-level environment variables
+2025-11-24T23:09:29.4300181Z ##[debug]Evaluating job container
+2025-11-24T23:09:29.4304178Z ##[debug]Evaluating job service containers
+2025-11-24T23:09:29.4306897Z ##[debug]Evaluating job defaults
+2025-11-24T23:09:29.4331915Z Prepare all required actions
+2025-11-24T23:09:29.4370052Z Getting action download info
+2025-11-24T23:09:29.7903125Z Download action repository 'actions/deploy-pages@v4' (SHA:d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e)
+2025-11-24T23:09:30.6090455Z ##[debug]Download 'https://api.github.com/repos/actions/deploy-pages/tarball/d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e' to '/home/runner/work/_actions/_temp_55b6f92b-07c4-4869-af97-a28f09fe329e/1c290a9f-a4cf-404e-adad-1f0856f84813.tar.gz'
+2025-11-24T23:09:30.7155211Z ##[debug]Unwrap 'actions-deploy-pages-d6db901' to '/home/runner/work/_actions/actions/deploy-pages/v4'
+2025-11-24T23:09:30.7252120Z ##[debug]Archive '/home/runner/work/_actions/_temp_55b6f92b-07c4-4869-af97-a28f09fe329e/1c290a9f-a4cf-404e-adad-1f0856f84813.tar.gz' has been unzipped into '/home/runner/work/_actions/actions/deploy-pages/v4'.
+2025-11-24T23:09:30.7348232Z ##[debug]action.yml for action: '/home/runner/work/_actions/actions/deploy-pages/v4/action.yml'.
+2025-11-24T23:09:30.7841533Z ##[debug]Set step 'deployment' display name to: 'Deploy to GitHub Pages'
+2025-11-24T23:09:30.7843359Z Complete job name: deploy
+2025-11-24T23:09:30.7855252Z ##[debug]Collect running processes for tracking orphan processes.
+2025-11-24T23:09:30.8000566Z ##[debug]Finishing: Set up job
+2025-11-24T23:09:30.8120997Z ##[debug]Evaluating condition for step: 'Deploy to GitHub Pages'
+2025-11-24T23:09:30.8154870Z ##[debug]Evaluating: success()
+2025-11-24T23:09:30.8159673Z ##[debug]Evaluating success:
+2025-11-24T23:09:30.8174138Z ##[debug]=> true
+2025-11-24T23:09:30.8179785Z ##[debug]Result: true
+2025-11-24T23:09:30.8202103Z ##[debug]Starting: Deploy to GitHub Pages
+2025-11-24T23:09:30.8322287Z ##[debug]Loading inputs
+2025-11-24T23:09:30.8331741Z ##[debug]Evaluating: github.token
+2025-11-24T23:09:30.8333078Z ##[debug]Evaluating Index:
+2025-11-24T23:09:30.8335342Z ##[debug]..Evaluating github:
+2025-11-24T23:09:30.8336779Z ##[debug]..=> Object
+2025-11-24T23:09:30.8342276Z ##[debug]..Evaluating String:
+2025-11-24T23:09:30.8343377Z ##[debug]..=> 'token'
+2025-11-24T23:09:30.8347957Z ##[debug]=> '***'
+2025-11-24T23:09:30.8349742Z ##[debug]Result: '***'
+2025-11-24T23:09:30.8357800Z ##[debug]Loading env
+2025-11-24T23:09:30.8424852Z ##[group]Run actions/deploy-pages@v4
+2025-11-24T23:09:30.8425925Z with:
+2025-11-24T23:09:30.8426852Z   token: ***
+2025-11-24T23:09:30.8427330Z   timeout: 600000
+2025-11-24T23:09:30.8427840Z   error_count: 10
+2025-11-24T23:09:30.8428368Z   reporting_interval: 5000
+2025-11-24T23:09:30.8429015Z   artifact_name: github-pages
+2025-11-24T23:09:30.8429562Z   preview: false
+2025-11-24T23:09:30.8430353Z ##[endgroup]
+2025-11-24T23:09:31.0654263Z ##[debug]all variables are set
+2025-11-24T23:09:31.0656207Z ##[debug]all variables are set
+2025-11-24T23:09:31.0659866Z ##[debug]ID token url is https://run-actions-2-azure-eastus.actions.githubusercontent.com/148//idtoken/8d02ad66-3ac7-430f-9323-1fd886e1a020/9bc6a580-db1e-5d87-be6a-322ffc1fc087?api-version=2.0
+2025-11-24T23:09:31.3231533Z ::add-mask::***
+2025-11-24T23:09:31.3237222Z ##[debug]Actor: opj161
+2025-11-24T23:09:31.3238710Z ##[debug]Action ID: deployment
+2025-11-24T23:09:31.3240308Z ##[debug]Actions Workflow Run ID: 19652242622
+2025-11-24T23:09:31.3241839Z Fetching artifact metadata for "github-pages" in this workflow run
+2025-11-24T23:09:31.3250181Z ##[debug]Workflow Run Backend ID: 8d02ad66-3ac7-430f-9323-1fd886e1a020
+2025-11-24T23:09:31.3254200Z ##[debug]Workflow Job Run Backend ID: 9bc6a580-db1e-5d87-be6a-322ffc1fc087
+2025-11-24T23:09:31.3260300Z ##[debug][Request] ListArtifacts https://results-receiver.actions.githubusercontent.com/twirp/github.actions.results.api.v1.ArtifactService/ListArtifacts
+2025-11-24T23:09:31.5256669Z ##[debug][Response] - 200
+2025-11-24T23:09:31.5258849Z ##[debug]Headers: {
+2025-11-24T23:09:31.5260074Z ##[debug]  "content-length": "333",
+2025-11-24T23:09:31.5261859Z ##[debug]  "content-type": "application/json",
+2025-11-24T23:09:31.5263987Z ##[debug]  "date": "Mon, 24 Nov 2025 23:09:31 GMT",
+2025-11-24T23:09:31.5265815Z ##[debug]  "x-github-backend": "Kubernetes",
+2025-11-24T23:09:31.5268220Z ##[debug]  "x-github-request-id": "2442:112D53:5D8852:70B811:6924E5AB"
+2025-11-24T23:09:31.5270682Z ##[debug]}
+2025-11-24T23:09:31.5273179Z ##[debug]Body: {
+2025-11-24T23:09:31.5274459Z ##[debug]  "artifacts": [
+2025-11-24T23:09:31.5275975Z ##[debug]    {
+2025-11-24T23:09:31.5277809Z ##[debug]      "workflow_run_backend_id": "8d02ad66-3ac7-430f-9323-1fd886e1a020",
+2025-11-24T23:09:31.5280687Z ##[debug]      "workflow_job_run_backend_id": "6106bfce-726b-5ea7-be7d-c2113a376087",
+2025-11-24T23:09:31.5283643Z ##[debug]      "database_id": "4666953328",
+2025-11-24T23:09:31.5285109Z ##[debug]      "name": "github-pages",
+2025-11-24T23:09:31.5286492Z ##[debug]      "size": "1525",
+2025-11-24T23:09:31.5287839Z ##[debug]      "created_at": "2025-11-24T23:09:20Z",
+2025-11-24T23:09:31.5290112Z ##[debug]      "digest": "sha256:f9ca354bbface8ec1c08d5974be14b7a22d0a7e12fcf53d487bcae34004424e2"
+2025-11-24T23:09:31.5292202Z ##[debug]    }
+2025-11-24T23:09:31.5293371Z ##[debug]  ]
+2025-11-24T23:09:31.5294343Z ##[debug]}
+2025-11-24T23:09:31.5295484Z Found 1 artifact(s)
+2025-11-24T23:09:31.5297342Z ##[debug]List artifact count: 1
+2025-11-24T23:09:31.5300455Z ##[debug]Artifact: {"name":"github-pages","id":4666953328,"size":1525,"createdAt":"2025-11-24T23:09:20.000Z"}
+2025-11-24T23:09:31.5302779Z Creating Pages deployment with payload:
+2025-11-24T23:09:31.5304086Z {
+2025-11-24T23:09:31.5305058Z 	"artifact_id": 4666953328,
+2025-11-24T23:09:31.5306525Z 	"pages_build_version": "2a6db8d02c2d54ad0e6e53b4123801f48da7e8c1",
+2025-11-24T23:09:31.5414731Z 	"oidc_token": "***"
+2025-11-24T23:09:31.5416048Z }
+2025-11-24T23:09:31.9115693Z Created deployment for 2a6db8d02c2d54ad0e6e53b4123801f48da7e8c1, ID: 2a6db8d02c2d54ad0e6e53b4123801f48da7e8c1
+2025-11-24T23:09:31.9125177Z ##[debug]{"id":"2a6db8d02c2d54ad0e6e53b4123801f48da7e8c1","page_url":"https://opj161.github.io/cadence-3/","status_url":"https://api.github.com/repos/opj161/cadence-3/pages/deployment/status/2a6db8d02c2d54ad0e6e53b4123801f48da7e8c1","preview_url":""}
+2025-11-24T23:09:36.9132410Z Getting Pages deployment status...
+2025-11-24T23:09:37.1660251Z Reported success!
+2025-11-24T23:09:37.1743190Z ##[debug]Node Action run completed with exit code 0
+2025-11-24T23:09:37.1795285Z ##[debug]Set output page_url = https://opj161.github.io/cadence-3/
+2025-11-24T23:09:37.1796334Z ##[debug]Set output status = succeed
+2025-11-24T23:09:37.1801706Z ##[debug]Finishing: Deploy to GitHub Pages
+2025-11-24T23:09:37.1847530Z ##[debug]Starting: Complete job
+2025-11-24T23:09:37.1849254Z Evaluate and set environment url
+2025-11-24T23:09:37.1853464Z ##[debug]Evaluating: steps.deployment.outputs.page_url
+2025-11-24T23:09:37.1853895Z ##[debug]Evaluating Index:
+2025-11-24T23:09:37.1854197Z ##[debug]..Evaluating Index:
+2025-11-24T23:09:37.1854532Z ##[debug]....Evaluating Index:
+2025-11-24T23:09:37.1854920Z ##[debug]......Evaluating steps:
+2025-11-24T23:09:37.1855260Z ##[debug]......=> Object
+2025-11-24T23:09:37.1855632Z ##[debug]......Evaluating String:
+2025-11-24T23:09:37.1855988Z ##[debug]......=> 'deployment'
+2025-11-24T23:09:37.1856361Z ##[debug]....=> Object
+2025-11-24T23:09:37.1856661Z ##[debug]....Evaluating String:
+2025-11-24T23:09:37.1856986Z ##[debug]....=> 'outputs'
+2025-11-24T23:09:37.1857281Z ##[debug]..=> Object
+2025-11-24T23:09:37.1857582Z ##[debug]..Evaluating String:
+2025-11-24T23:09:37.1857877Z ##[debug]..=> 'page_url'
+2025-11-24T23:09:37.1858420Z ##[debug]=> 'https://opj161.github.io/cadence-3/'
+2025-11-24T23:09:37.1858925Z ##[debug]Result: 'https://opj161.github.io/cadence-3/'
+2025-11-24T23:09:37.1859789Z Evaluated environment url: https://opj161.github.io/cadence-3/
+2025-11-24T23:09:37.1861088Z Uploading runner diagnostic logs
+2025-11-24T23:09:37.1871840Z ##[debug]Starting diagnostic file upload.
+2025-11-24T23:09:37.1872246Z ##[debug]Setting up diagnostic log folders.
+2025-11-24T23:09:37.1874495Z ##[debug]Creating diagnostic log files folder.
+2025-11-24T23:09:37.1882006Z ##[debug]Copying 1 worker diagnostic logs.
+2025-11-24T23:09:37.1889608Z ##[debug]Copying 1 runner diagnostic logs.
+2025-11-24T23:09:37.1890623Z ##[debug]Zipping diagnostic files.
+2025-11-24T23:09:37.1951543Z ##[debug]Uploading diagnostic metadata file.
+2025-11-24T23:09:37.1980867Z ##[debug]Diagnostic file upload complete.
+2025-11-24T23:09:37.1981481Z Completed runner diagnostic log upload
+2025-11-24T23:09:37.1981865Z Cleaning up orphan processes
+2025-11-24T23:09:37.2283343Z ##[debug]Finishing: Complete job
+2025-11-24T23:09:37.2317972Z ##[debug]Finishing: deploy
