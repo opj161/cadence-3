@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { Editor } from './components/Editor';
 import { StatsBar } from './components/StatsBar';
 import { CreativeAssist } from './components/CreativeAssist';
@@ -6,8 +6,8 @@ import { Button } from './components/Button';
 import { analyzeText, getDocumentStats } from './services/syllableService';
 import { Language, Theme } from './types';
 import { 
-  Moon, Sun, Type, Download, Trash2, 
-  Sparkles, Monitor, Dot, ToggleLeft, ToggleRight 
+  Moon, Sun, Download, Trash2, 
+  Sparkles, ToggleLeft, ToggleRight, Type
 } from 'lucide-react';
 
 const DEFAULT_TEXT = `[Verse 1]
@@ -24,10 +24,15 @@ Lighting up the dark again
 export default function App() {
   const [text, setText] = useState<string>(DEFAULT_TEXT);
   const [language, setLanguage] = useState<Language>(Language.EN);
-  const [theme, setTheme] = useState<Theme>(Theme.DARK); // Default to Studio Mode
-  const [showSyllables, setShowSyllables] = useState<boolean>(true); // Default to TRUE so user sees value immediately
+  const [theme, setTheme] = useState<Theme>(Theme.DARK);
+  const [showSyllables, setShowSyllables] = useState<boolean>(true);
   const [fontSize, setFontSize] = useState<number>(16);
   const [isAssistOpen, setIsAssistOpen] = useState(false);
+
+  // Performance Optimization:
+  // Defer the heavy syllable analysis so typing remains buttery smooth.
+  // The UI will update the textarea immediately, while the overlay catches up.
+  const deferredText = useDeferredValue(text);
 
   // Apply theme to HTML tag
   useEffect(() => {
@@ -38,9 +43,8 @@ export default function App() {
     }
   }, [theme]);
 
-  // Real-time analysis
-  // We use useMemo so we don't recalculate on every purely UI render (like sidebar toggle)
-  const lineStats = useMemo(() => analyzeText(text, language), [text, language]);
+  // Expensive analysis runs on deferred text
+  const lineStats = useMemo(() => analyzeText(deferredText, language), [deferredText, language]);
   const docStats = useMemo(() => getDocumentStats(lineStats), [lineStats]);
 
   const toggleTheme = () => {
@@ -72,71 +76,74 @@ export default function App() {
   };
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden">
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 dark:bg-gray-950 font-sans selection:bg-indigo-500/30">
       {/* Header */}
-      <header className="h-16 flex items-center justify-between px-6 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 shrink-0 z-10">
-        <div className="flex items-center gap-4">
+      <header className="h-16 flex items-center justify-between px-6 bg-white dark:bg-gray-950 border-b border-gray-200 dark:border-gray-800 shrink-0 z-20 shadow-sm dark:shadow-none">
+        <div className="flex items-center gap-6">
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Cadence</h1>
-            <span className="text-[10px] text-gray-500 uppercase tracking-widest">Bilingual Editor</span>
+            <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100 font-sans">Cadence</h1>
+            <span className="text-[10px] font-bold text-indigo-500 uppercase tracking-widest">Studio Edition</span>
           </div>
           
-          <div className="h-6 w-px bg-gray-300 dark:bg-gray-700 mx-2"></div>
+          <div className="h-8 w-px bg-gray-200 dark:bg-gray-800"></div>
           
-          {/* Language Toggle */}
-          <div className="flex bg-gray-100 dark:bg-gray-800 rounded-lg p-1">
+          {/* Language Toggle - Pill Design */}
+          <div className="flex bg-gray-100 dark:bg-gray-900 rounded-full p-1 border border-gray-200 dark:border-gray-800">
             <button 
               onClick={() => setLanguage(Language.EN)}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${language === Language.EN ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}
+              className={`px-4 py-1 text-xs font-bold rounded-full transition-all duration-200 ${language === Language.EN ? 'bg-white dark:bg-gray-800 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
             >
               EN
             </button>
             <button 
               onClick={() => setLanguage(Language.DE)}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${language === Language.DE ? 'bg-white dark:bg-gray-700 shadow-sm text-gray-900 dark:text-gray-100' : 'text-gray-500 dark:text-gray-400'}`}
+              className={`px-4 py-1 text-xs font-bold rounded-full transition-all duration-200 ${language === Language.DE ? 'bg-white dark:bg-gray-800 shadow-sm text-indigo-600 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
             >
               DE
             </button>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          {/* Editor Controls */}
-          <Button variant="ghost" size="icon" onClick={() => setShowSyllables(!showSyllables)} title="Toggle Syllable Dots">
-            {showSyllables ? <ToggleRight className="text-indigo-500" /> : <ToggleLeft />}
-          </Button>
-          
-          <div className="h-4 w-px bg-gray-300 dark:bg-gray-700 mx-1"></div>
+        <div className="flex items-center gap-3">
+          {/* Editor Controls Group */}
+          <div className="flex items-center bg-gray-100 dark:bg-gray-900 rounded-lg p-1 border border-gray-200 dark:border-gray-800">
+            <Button variant="ghost" size="sm" onClick={() => setShowSyllables(!showSyllables)} title="Toggle Visualizer">
+               {showSyllables ? <ToggleRight className="text-indigo-500 w-5 h-5" /> : <ToggleLeft className="text-gray-400 w-5 h-5" />}
+            </Button>
+            <div className="w-px h-4 bg-gray-300 dark:bg-gray-700 mx-1"></div>
+             <Button variant="ghost" size="sm" onClick={() => setFontSize(Math.max(12, fontSize - 2))} title="Smaller Text">
+              <Type className="w-3 h-3" />
+              <span className="sr-only">Decrease Font</span>
+            </Button>
+            <span className="text-xs font-mono text-gray-400 w-6 text-center">{fontSize}</span>
+            <Button variant="ghost" size="sm" onClick={() => setFontSize(Math.min(32, fontSize + 2))} title="Larger Text">
+              <Type className="w-4 h-4" />
+              <span className="sr-only">Increase Font</span>
+            </Button>
+          </div>
 
-          <Button variant="ghost" size="icon" onClick={() => setFontSize(Math.max(12, fontSize - 2))} title="Smaller Text">
-            <span className="text-xs font-bold">A-</span>
-          </Button>
-          <Button variant="ghost" size="icon" onClick={() => setFontSize(Math.min(32, fontSize + 2))} title="Larger Text">
-            <span className="text-lg font-bold">A+</span>
-          </Button>
-
-          <div className="h-4 w-px bg-gray-300 dark:bg-gray-700 mx-1"></div>
+          <div className="h-6 w-px bg-gray-200 dark:bg-gray-800 mx-1"></div>
 
           <Button variant="ghost" size="icon" onClick={() => handleExport('txt')} title="Export TXT">
-            <Download className="w-4 h-4" />
+            <Download className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </Button>
           
           <Button variant="ghost" size="icon" onClick={() => setText('')} title="Clear Text">
-            <Trash2 className="w-4 h-4" />
+            <Trash2 className="w-4 h-4 text-gray-600 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400" />
           </Button>
           
           <Button variant="ghost" size="icon" onClick={toggleTheme} title="Toggle Theme">
-             {theme === Theme.LIGHT ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+             {theme === Theme.LIGHT ? <Moon className="w-4 h-4 text-gray-600" /> : <Sun className="w-4 h-4 text-gray-400" />}
           </Button>
 
           <Button 
             variant="primary" 
             size="sm" 
-            className="ml-4 gap-2 hidden md:inline-flex"
+            className="ml-2 gap-2 shadow-lg shadow-indigo-500/20"
             onClick={() => setIsAssistOpen(true)}
           >
             <Sparkles className="w-4 h-4" />
-            <span>Assist</span>
+            <span className="hidden md:inline">Assist</span>
           </Button>
         </div>
       </header>

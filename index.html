@@ -16,10 +16,25 @@
               mono: ['JetBrains Mono', 'monospace'],
             },
             colors: {
+              // Mapping 'gray' to Slate for that cool, professional studio look
               gray: {
-                750: '#2d3748',
-                850: '#1a202c',
-                950: '#171923',
+                50: '#f8fafc',
+                100: '#f1f5f9',
+                200: '#e2e8f0',
+                300: '#cbd5e1',
+                400: '#94a3b8',
+                500: '#64748b',
+                600: '#475569',
+                700: '#334155',
+                800: '#1e293b',
+                900: '#0f172a',
+                950: '#020617',
+              },
+              // Zinc for neutral UI elements
+              zinc: {
+                800: '#27272a',
+                900: '#18181b',
+                950: '#09090b',
               }
             }
           }
@@ -29,27 +44,36 @@
     <style>
       /* Custom Scrollbar for Studio Mode */
       .dark ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 10px;
+        height: 10px;
       }
       .dark ::-webkit-scrollbar-track {
-        background: #1a202c;
+        background: #020617; /* Slate 950 */
       }
       .dark ::-webkit-scrollbar-thumb {
-        background: #4a5568;
-        border-radius: 4px;
+        background: #334155; /* Slate 700 */
+        border-radius: 5px;
+        border: 2px solid #020617; /* Slate 950 */
       }
       .dark ::-webkit-scrollbar-thumb:hover {
-        background: #718096;
+        background: #475569; /* Slate 600 */
       }
       
-      /* Hide scrollbar for gutter sync */
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
+      /* Hide scrollbar but keep layout space */
+      .scrollbar-hidden::-webkit-scrollbar {
+        visibility: hidden;
+        width: 10px; /* Must match visible scrollbar width to prevent layout shift */
       }
-      .no-scrollbar {
+      .scrollbar-hidden {
         -ms-overflow-style: none;
-        scrollbar-width: none;
+        scrollbar-width: none; /* Firefox fallback might still shift, but Webkit is handled */
+      }
+      
+      /* Utilities for Editor Overlay alignment */
+      .editor-layer {
+        overflow-y: scroll; /* Force scrollbar track to exist */
+        overflow-x: hidden;
+        padding-right: 0; /* Let scrollbar take space */
       }
     </style>
   <script type="importmap">
@@ -67,7 +91,7 @@
 }
 </script>
 </head>
-  <body class="bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 transition-colors duration-200">
-    <div id="root"></div>
+  <body class="bg-gray-50 text-gray-900 dark:bg-gray-950 dark:text-gray-100 transition-colors duration-200 overflow-hidden">
+    <div id="root" class="h-full w-full"></div>
   </body>
 </html>
