@@ -107,9 +107,10 @@ const analyzeLine = (line: string, lang: Language): LineStats => {
 
 const cacheResult = (key: string, result: LineStats) => {
     if (lineCache.size >= MAX_CACHE_SIZE) {
-        // Simple LRU-approx: clear first entry
-        const firstKey = lineCache.keys().next().value;
-        if (firstKey) lineCache.delete(firstKey);
+        // Evict 10% of cache size using FIFO approach for better efficiency
+        const entriesToRemove = Math.max(1, Math.floor(MAX_CACHE_SIZE * 0.1));
+        const keysToRemove = Array.from(lineCache.keys()).slice(0, entriesToRemove);
+        keysToRemove.forEach(k => lineCache.delete(k));
     }
     lineCache.set(key, result);
 };

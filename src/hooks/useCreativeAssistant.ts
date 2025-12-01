@@ -4,6 +4,9 @@ import { Language } from '../types/index';
 
 export type AssistType = 'rhyme' | 'continue' | 'custom';
 
+// Pre-compiled regex for performance
+const WORD_CLEANER_REGEX = /[^\p{L}\p{M}\s'-]/gu;
+
 export const useCreativeAssistant = (contextText: string, language: Language) => {
   const [suggestion, setSuggestion] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
@@ -13,7 +16,7 @@ export const useCreativeAssistant = (contextText: string, language: Language) =>
       const lines = text.split('\n').filter(l => l.trim() !== '' && !l.startsWith('[') && !l.startsWith('#'));
       if (lines.length === 0) return '';
       const lastLine = lines[lines.length - 1];
-      const words = lastLine.replace(/[^\p{L}\p{M}\s'-]/gu, '').trim().split(/\s+/);
+      const words = lastLine.replace(WORD_CLEANER_REGEX, '').trim().split(/\s+/);
       return words.length > 0 ? words[words.length - 1] : '';
   };
 

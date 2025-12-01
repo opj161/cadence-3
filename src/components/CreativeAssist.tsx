@@ -12,6 +12,9 @@ interface CreativeAssistProps {
   onInsert: (text: string) => void;
 }
 
+// Delay (ms) to allow API key state propagation after dialog closes
+const API_KEY_CHECK_DELAY = 500;
+
 export const CreativeAssist: React.FC<CreativeAssistProps> = ({ 
   isOpen, 
   onClose, 
@@ -46,7 +49,7 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
   const handleConnectKey = async () => {
       if (window.aistudio) {
           await window.aistudio.openSelectKey();
-          setTimeout(checkApiKey, 500);
+          setTimeout(checkApiKey, API_KEY_CHECK_DELAY);
       }
   };
 
