@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sparkles, ArrowRight, X, Loader2, MessageSquarePlus, Music, Key } from 'lucide-react';
+import { Sparkles, ArrowRight, X, Loader2, MessageSquarePlus, Music, Key, AlertCircle } from 'lucide-react';
 import { Button } from './Button';
-import { streamCreativeSuggestion } from '../services/geminiService';
-import { Language } from '../types';
+import { useCreativeAssistant, AssistType } from '../hooks/useCreativeAssistant';
+import { Language } from '../types/index';
 
 interface CreativeAssistProps {
   isOpen: boolean;
@@ -12,6 +12,9 @@ interface CreativeAssistProps {
   onInsert: (text: string) => void;
 }
 
+// Delay (ms) to allow API key state propagation after dialog closes
+const API_KEY_CHECK_DELAY = 500;
+
 export const CreativeAssist: React.FC<CreativeAssistProps> = ({ 
   isOpen, 
   onClose, 
@@ -19,97 +22,43 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
   language,
   onInsert 
 }) => {
-  const [prompt, setPrompt] = useState('');
-  const [isStreaming, setIsStreaming] = useState(false);
-  const [suggestion, setSuggestion] = useState('');
+  const [customPrompt, setCustomPrompt] = useState('');
   const [hasApiKey, setHasApiKey] = useState<boolean | null>(null);
+  const scrollRef = useRef<HTMLPreElement>(null);
   
-  // Auto-scroll to bottom of suggestion as it streams
-  const suggestionRef = useRef<HTMLPreElement>(null);
+  // Custom Hook handles logic
+  const { suggestion, isStreaming, error, generate } = useCreativeAssistant(contextText, language);
 
   useEffect(() => {
-    if (isOpen) {
-        checkApiKey();
-    }
+    if (isOpen) checkApiKey();
   }, [isOpen]);
 
+  // Auto-scroll logic
   useEffect(() => {
-    if (suggestionRef.current) {
-        suggestionRef.current.scrollTop = suggestionRef.current.scrollHeight;
-    }
+    if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
   }, [suggestion]);
 
   const checkApiKey = async () => {
     if (window.aistudio) {
-        const hasKey = await window.aistudio.hasSelectedApiKey();
-        setHasApiKey(hasKey);
+        setHasApiKey(await window.aistudio.hasSelectedApiKey());
     } else {
-        // Fallback for dev environments without the wrapper
-        setHasApiKey(true);
+        setHasApiKey(true); // Dev fallback
     }
   };
 
   const handleConnectKey = async () => {
       if (window.aistudio) {
           await window.aistudio.openSelectKey();
-          // Small delay to allow state propagation, then recheck
-          setTimeout(checkApiKey, 500);
+          setTimeout(checkApiKey, API_KEY_CHECK_DELAY);
       }
   };
 
-  // Helper: Extract the last meaningful word for rhyme lookups
-  const getLastWord = (text: string): string => {
-      const lines = text.split('\n').filter(l => l.trim() !== '' && !l.startsWith('[') && !l.startsWith('#'));
-      if (lines.length === 0) return '';
-      const lastLine = lines[lines.length - 1];
-      // Clean punctuation
-      const words = lastLine.replace(/[^\w\säöüß'-]/g, '').trim().split(/\s+/);
-      return words.length > 0 ? words[words.length - 1] : '';
-  };
-
-  const handleGenerate = async (type: 'rhyme' | 'continue' | 'custom') => {
-    if (isStreaming) return;
-    
-    // Safety check for API Key before starting
+  const handleGenerate = (type: AssistType) => {
     if (hasApiKey === false) {
         handleConnectKey();
         return;
     }
-
-    setSuggestion('');
-    setIsStreaming(true);
-    
-    let userPrompt = prompt;
-    const langName = language === Language.DE ? "German" : "English";
-    const systemInstruction = `You are a sophisticated songwriting assistant for a musician. The user is writing in ${langName}. Provide concise, artistic, and usable output. Do not include conversational filler like "Here are some suggestions". Just the content.`;
-
-    try {
-        if (type === 'rhyme') {
-            const word = getLastWord(contextText);
-            if (!word) {
-                setSuggestion("I need some lyrics first to find a rhyme!");
-                setIsStreaming(false);
-                return;
-            }
-            userPrompt = `List 8-10 creative rhymes (including slant rhymes) for the word "${word}". Format them as a simple list.`;
-        } else if (type === 'continue') {
-            const context = contextText.slice(-600); // Send last 600 chars
-            userPrompt = `Continue these lyrics with 4 more lines, matching the rhythm, tone, and rhyme scheme:\n\n"${context}"`;
-        }
-        
-        // If custom, use the state 'prompt' as is.
-
-        const stream = streamCreativeSuggestion(userPrompt, systemInstruction, language);
-        
-        for await (const chunk of stream) {
-            setSuggestion(prev => prev + chunk);
-        }
-
-    } catch (error) {
-        setSuggestion("Error: Could not connect to AI service. Please check your API key.");
-    } finally {
-        setIsStreaming(false);
-    }
+    generate(type, type === 'custom' ? customPrompt : undefined);
   };
 
   if (!isOpen) return null;
@@ -191,18 +140,29 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
           <div className="flex gap-2">
             <input 
               type="text" 
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
+              value={customPrompt}
+              onChange={(e) => setCustomPrompt(e.target.value)}
               placeholder="e.g. Metaphors for silence..."
               className="flex-1 bg-white dark:bg-gray-950 border border-gray-200 dark:border-gray-700 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none transition-shadow text-gray-900 dark:text-gray-100 placeholder-gray-400"
               onKeyDown={(e) => e.key === 'Enter' && handleGenerate('custom')}
               disabled={isStreaming}
             />
-            <Button variant="primary" size="icon" onClick={() => handleGenerate('custom')} disabled={isStreaming || !prompt}>
+            <Button variant="primary" size="icon" onClick={() => handleGenerate('custom')} disabled={isStreaming || !customPrompt}>
               {isStreaming ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowRight className="w-4 h-4" />}
             </Button>
           </div>
         </div>
+
+        {/* Error Display */}
+        {error && (
+          <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-center space-y-2">
+            <div className="text-red-600 dark:text-red-500 font-medium text-sm flex items-center justify-center gap-2">
+              <AlertCircle className="w-4 h-4" />
+              Error
+            </div>
+            <p className="text-xs text-red-700 dark:text-red-400">{error}</p>
+          </div>
+        )}
 
         {/* Output Area */}
         {(suggestion || isStreaming) && (
@@ -215,7 +175,7 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
              </div>
              
              <pre 
-               ref={suggestionRef}
+               ref={scrollRef}
                className="flex-1 whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-300 font-mono leading-relaxed mb-4 bg-white/50 dark:bg-black/20 p-3 rounded-lg border border-indigo-100 dark:border-indigo-900/30 overflow-y-auto scrollbar-thin"
              >
                {suggestion}

@@ -2,7 +2,7 @@ import React from 'react';
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'ghost' | 'icon';
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'icon';
   active?: boolean;
 }
 
@@ -23,16 +23,17 @@ export const Button: React.FC<ButtonProps> = ({
     icon: "p-2 hover:bg-gray-100 text-gray-700 dark:text-gray-400 dark:hover:bg-gray-800 focus:ring-gray-500 rounded-full"
   };
 
-  const sizes = {
+  const sizes: Record<string, string> = {
     sm: "h-8 px-3 text-xs",
     md: "h-10 px-4 py-2 text-sm",
-    lg: "h-12 px-6 text-base"
+    lg: "h-12 px-6 text-base",
+    icon: ""
   };
 
   const activeStyles = active ? "bg-gray-200 dark:bg-gray-700 text-indigo-600 dark:text-indigo-400" : "";
 
-  // Icon variant overrides size usually
-  const finalSize = variant === 'icon' ? '' : sizes[size];
+  // Icon variant or size overrides normal sizing
+  const finalSize = variant === 'icon' || size === 'icon' ? '' : sizes[size];
 
   return (
     <button 
