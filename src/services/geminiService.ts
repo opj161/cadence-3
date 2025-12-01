@@ -1,5 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
-import { Language } from "../types";
+import { Language } from "../types/index";
 
 export const streamCreativeSuggestion = async function* (
     prompt: string, 

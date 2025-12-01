@@ -4,7 +4,7 @@ import { StatsBar } from './components/StatsBar';
 import { CreativeAssist } from './components/CreativeAssist';
 import { Button } from './components/Button';
 import { analyzeText, getDocumentStats } from './services/syllableService';
-import { Language, Theme } from './types';
+import { Language, Theme } from './types/index';
 import { 
   Moon, Sun, Download, Trash2, 
   Sparkles, ToggleLeft, ToggleRight, Type

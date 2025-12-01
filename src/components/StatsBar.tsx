@@ -1,5 +1,5 @@
 import React from 'react';
-import { DocumentStats } from '../types';
+import { DocumentStats } from '../types/index';
 import { AlignLeft, Hash, Activity, BarChart2 } from 'lucide-react';
 
 interface StatsBarProps {
