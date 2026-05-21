@@ -1,39 +1,40 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# Cadence 3
 
-# Run and deploy your AI Studio app
+Cadence is a lyric editor with live syllable counts and inline hyphenation markers.
 
-This contains everything you need to run your app locally and deploy it to GitHub Pages.
+## What changed in this fixed build
 
-View your app in AI Studio: https://ai.studio/apps/drive/1MXfU1kzJlJg0-Y7cEzxNxrxedXF2VFI4
+- Replaced the custom textarea/backdrop/gutter stack with a CodeMirror-based editor so syllable counts are attached to real editor lines.
+- Restored stronger German syllable logic using the `hyphen` German and English pattern packages instead of the previous Hypher setup.
+- Default language is now German, with a mismatch warning when the text appears to be in the other supported language.
+- Fixed the dark theme so CodeMirror uses a real dark editor theme instead of inheriting light-mode defaults, and theme choice now persists across reloads.
+- Removed deferred/stale text analysis from the visible editor path.
+- Moved Tailwind into the Vite build pipeline and removed the browser Play CDN/import map setup.
+- Removed production browser injection of Gemini API keys. AI assist now requires either a production-safe server proxy or a local-development-only `VITE_GEMINI_API_KEY`.
+- Added a Vitest regression suite, `npm run typecheck`, and made `npm run build` run TypeScript before Vite.
 
-## Run Locally
+## Run locally
 
-**Prerequisites:**  Node.js
+Prerequisites: Node.js.
 
+```bash
+npm install
+npm run dev
+```
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+Optional local-only AI assist:
 
-## Deploy to GitHub Pages
+```bash
+VITE_GEMINI_API_KEY=your_key npm run dev
+```
 
-This app is configured to deploy automatically to GitHub Pages at https://opj161.github.io/cadence-3.
+Do not use browser-bundled API keys for production deployments. Route production AI calls through a server-side or edge-function proxy.
 
-### Setup (One-time)
+## Verify
 
-1. Go to your repository Settings → Pages
-2. Under "Build and deployment", set Source to "**GitHub Actions**"
-
-### Deployment
-
-The app will automatically deploy when you push to the `main` branch. You can also trigger a manual deployment:
-
-1. Go to Actions tab in your repository
-2. Select "Deploy to GitHub Pages" workflow
-3. Click "Run workflow"
-
-The deployment typically takes 1-2 minutes to complete.
+```bash
+npm test
+npm run typecheck
+npm run build
+npm audit --omit=dev --audit-level=moderate
+```

@@ -1,41 +1,52 @@
-import { GoogleGenAI } from "@google/genai";
-import { Language } from "../types";
+import { Language } from '../types';
+
+const getBrowserGeminiApiKey = (): string | undefined => {
+  // Browser-side keys are intentionally limited to local development. Production
+  // deployments should call Gemini through a server-side or edge-function proxy.
+  if (!import.meta.env.DEV) {
+    return undefined;
+  }
+
+  return import.meta.env.VITE_GEMINI_API_KEY;
+};
+
+export const isBrowserGeminiConfigured = (): boolean => Boolean(getBrowserGeminiApiKey());
 
 export const streamCreativeSuggestion = async function* (
-    prompt: string, 
-    systemInstruction: string, 
-    lang: Language
+  prompt: string,
+  systemInstruction: string,
+  lang: Language,
 ): AsyncGenerator<string, void, unknown> {
-    // Access the API key inside the function to ensure we get the latest value
-    // after the user has performed the selection in the UI.
-    const apiKey = process.env.API_KEY;
-    
-    if (!apiKey) {
-        throw new Error("API Key not found. Please connect your Google Cloud project.");
-    }
+  const apiKey = getBrowserGeminiApiKey();
 
-    const ai = new GoogleGenAI({ apiKey });
-    const modelId = "gemini-2.5-flash"; // Fast and capable for text tasks
-    
-    try {
-        const responseStream = await ai.models.generateContentStream({
-            model: modelId,
-            contents: prompt,
-            config: {
-                systemInstruction,
-                temperature: 0.85, // Balanced creativity
-                topK: 40,
-                maxOutputTokens: 600,
-            }
-        });
+  if (!apiKey) {
+    throw new Error('Gemini is not configured. Use a server-side proxy for production AI calls, or set VITE_GEMINI_API_KEY only for local development.');
+  }
 
-        for await (const chunk of responseStream) {
-            if (chunk.text) {
-                yield chunk.text;
-            }
-        }
-    } catch (error) {
-        console.error("Gemini Stream Error:", error);
-        throw error;
+  const { GoogleGenAI } = await import('@google/genai');
+  const ai = new GoogleGenAI({ apiKey });
+  const modelId = 'gemini-2.5-flash';
+  const languageName = lang === Language.DE ? 'German' : 'English';
+
+  try {
+    const responseStream = await ai.models.generateContentStream({
+      model: modelId,
+      contents: prompt,
+      config: {
+        systemInstruction: `${systemInstruction}\nWrite in ${languageName}.`,
+        temperature: 0.85,
+        topK: 40,
+        maxOutputTokens: 600,
+      },
+    });
+
+    for await (const chunk of responseStream) {
+      if (chunk.text) {
+        yield chunk.text;
+      }
     }
+  } catch (error) {
+    console.error('Gemini Stream Error:', error);
+    throw error;
+  }
 };

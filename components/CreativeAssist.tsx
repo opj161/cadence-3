@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Sparkles, ArrowRight, X, Loader2, MessageSquarePlus, Music, Key } from 'lucide-react';
 import { Button } from './Button';
-import { streamCreativeSuggestion } from '../services/geminiService';
+import { isBrowserGeminiConfigured, streamCreativeSuggestion } from '../services/geminiService';
 import { Language } from '../types';
 
 interface CreativeAssistProps {
@@ -44,8 +44,8 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
         const hasKey = await window.aistudio.hasSelectedApiKey();
         setHasApiKey(hasKey);
     } else {
-        // Fallback for dev environments without the wrapper
-        setHasApiKey(true);
+        // Local browser use is allowed only when an explicit development key exists.
+        setHasApiKey(isBrowserGeminiConfigured());
     }
   };
 
@@ -62,8 +62,10 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
       const lines = text.split('\n').filter(l => l.trim() !== '' && !l.startsWith('[') && !l.startsWith('#'));
       if (lines.length === 0) return '';
       const lastLine = lines[lines.length - 1];
-      // Clean punctuation
-      const words = lastLine.replace(/[^\w\säöüß'-]/g, '').trim().split(/\s+/);
+      const words = Array.from(
+        lastLine.matchAll(/[\p{L}\p{M}]+(?:[’'][\p{L}\p{M}]+)*/gu),
+        match => match[0],
+      );
       return words.length > 0 ? words[words.length - 1] : '';
   };
 
@@ -138,11 +140,11 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
                     API Key Required
                 </div>
                 <p className="text-xs text-amber-700 dark:text-amber-400">
-                    Connect a Google Cloud project to enable AI features.
+AI assist needs a local development key or a production-safe server proxy.
                 </p>
                 <Button variant="secondary" size="sm" onClick={handleConnectKey} className="w-full gap-2">
                     <Key className="w-3 h-3" />
-                    Connect Key
+Configure AI
                 </Button>
             </div>
         )}
@@ -237,7 +239,7 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
       
       {/* Footer */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-800 text-[10px] text-gray-400 text-center font-mono shrink-0">
-        Powered by Gemini 2.5 Flash
+        AI assist uses Gemini only when safely configured
       </div>
     </div>
   );

@@ -1,129 +1,140 @@
-import { Language, LineStats } from '../types';
-// @ts-ignore
-import Hypher from 'hypher';
-// @ts-ignore
-import german from 'hyphenation.de';
-// @ts-ignore
-import english from 'hyphenation.en-us';
+import { Language, LineStats, WordStats } from '../types';
+import { hyphenateSync as hyphenateGerman } from 'hyphen/de';
+import { hyphenateSync as hyphenateEnglish } from 'hyphen/en-us';
 
-// Initialize Hyphenation Engines
-const hyphenatorDE = new Hypher(german);
-const hyphenatorEN = new Hypher(english);
+const SOFT_HYPHEN = '\u00ad';
+const WORD_TOKEN_REGEX = /\S+/gu;
+const LEXICAL_SEGMENT_REGEX = /[\p{L}\p{M}]+(?:[’'][\p{L}\p{M}]+)*/gu;
+const GERMAN_SIGNAL_REGEX = /[äöüÄÖÜß]|\b(?:ich|wir|und|der|die|das|den|dem|ein|eine|einer|einen|nicht|uns|mich|dich|durch|nacht|augen|liebe|zeit|stadt)\b/iu;
 
-// Helper to re-attach punctuation to the split parts
-// Example: token "(feiern," -> clean "feiern" -> parts ["fei", "ern"]
-// Result: ["(fei", "ern,"]
-const reconstructParts = (original: string, clean: string, parts: string[]): string[] => {
-    if (parts.length === 0) return [original];
-    if (parts.length === 1 && parts[0] === clean && original !== clean) return [original];
+const isSectionHeader = (line: string): boolean => /^\s*\[[^\]\n]+\]\s*$/.test(line);
+const isCommentLine = (line: string): boolean => /^\s*#/.test(line);
 
-    // Find where the clean word sits in the original token
-    const cleanIndex = original.indexOf(clean);
-    
-    // Safety fallback if regex cleaning was too aggressive/mismatched
-    if (cleanIndex === -1) return [original];
+function splitHyphenatedOutput(output: string): string[] {
+  const parts = output
+    .split(SOFT_HYPHEN)
+    .map(part => part.trim())
+    .filter(Boolean);
 
-    const prefix = original.slice(0, cleanIndex);
-    const suffix = original.slice(cleanIndex + clean.length);
+  return parts.length > 0 ? parts : [output];
+}
 
-    const result = [...parts];
-    
-    // Attach prefix to first syllable
-    if (result.length > 0) {
-        result[0] = prefix + result[0];
-    }
-    
-    // Attach suffix to last syllable
-    if (result.length > 0) {
-        result[result.length - 1] = result[result.length - 1] + suffix;
-    }
-    
-    return result;
+function hyphenateLexicalSegment(segment: string, lang: Language): string[] {
+  const normalized = segment.normalize('NFC');
+  const hyphenate = lang === Language.DE ? hyphenateGerman : hyphenateEnglish;
+
+  try {
+    const hyphenated = hyphenate(normalized, {
+      hyphenChar: SOFT_HYPHEN,
+      minWordLength: 2,
+    });
+
+    return splitHyphenatedOutput(hyphenated);
+  } catch {
+    return [segment];
+  }
+}
+
+function analyzeToken(token: string, from: number, lang: Language): WordStats {
+  let display = '';
+  let cursor = 0;
+  let count = 0;
+  const syllables: string[] = [];
+
+  for (const match of token.matchAll(LEXICAL_SEGMENT_REGEX)) {
+    const index = match.index ?? 0;
+    const segment = match[0];
+
+    display += token.slice(cursor, index);
+
+    const parts = hyphenateLexicalSegment(segment, lang);
+    syllables.push(...parts);
+    count += parts.length;
+    display += parts.join('·');
+
+    cursor = index + segment.length;
+  }
+
+  display += token.slice(cursor);
+
+  return {
+    word: token,
+    display: display || token,
+    syllables,
+    count,
+    from,
+    to: from + token.length,
+  };
+}
+
+export function detectLanguage(text: string): Language {
+  return GERMAN_SIGNAL_REGEX.test(text) ? Language.DE : Language.EN;
 }
 
 export const analyzeText = (text: string, lang: Language): LineStats[] => {
   const lines = text.split('\n');
-  
+
   return lines.map(line => {
-    // Regex to identify headers more robustly, handling potential trailing spaces
-    const trimmed = line.trim();
-    const isHeader = /^\[.*\]$/.test(trimmed);
-    const isComment = trimmed.startsWith('#');
-    
-    // For headers and comments, we treat the entire line as a single token to preserve it 
-    // and prevent syllable logic from breaking it up.
-    if (isHeader || isComment) {
+    const isHeader = isSectionHeader(line);
+    const isComment = isCommentLine(line);
+
+    if (isHeader || isComment || line.trim().length === 0) {
       return {
         text: line,
         syllableCount: 0,
         isHeader,
         isComment,
-        words: [{ word: line, syllables: [line], count: 0 }]
+        words: [],
       };
     }
 
-    // Split line into tokens, preserving whitespace for reconstruction
-    const tokens = line.split(/(\s+)/);
-    
-    let totalLineSyllables = 0;
-    
-    const words = tokens.map(token => {
-        // If token is empty string (split artifact), return safe empty
-        if (token.length === 0) return { word: '', syllables: [], count: 0 };
+    const words: WordStats[] = [];
+    let syllableCount = 0;
 
-        // If token is just whitespace, preserve it but count 0
-        if (/^\s+$/.test(token)) {
-            return { word: token, syllables: [token], count: 0 };
-        }
+    for (const match of line.matchAll(WORD_TOKEN_REGEX)) {
+      const token = match[0];
+      const from = match.index ?? 0;
+      const word = analyzeToken(token, from, lang);
 
-        // Clean the word for hyphenation (remove punctuation like commas, parens, etc.)
-        // We keep characters that might be part of the word structure or international chars.
-        const cleanW = token.replace(/[^\w\säöüß'-]/g, "");
-        
-        // If word became empty after cleaning (e.g. just punctuation "-"), treat as 0 count
-        if(!cleanW) {
-            return { word: token, syllables: [token], count: 0 };
-        }
+      if (word.count > 0) {
+        syllableCount += word.count;
+      }
 
-        const hyphenator = lang === Language.DE ? hyphenatorDE : hyphenatorEN;
-        
-        // Get hyphenation parts (e.g. ["fei", "ern"])
-        // Note: Hypher returns the word itself in an array if it can't hyphenate it (count 1)
-        const parts = hyphenator.hyphenate(cleanW);
-        
-        // Re-attach original punctuation (e.g. ["fei", "ern,"])
-        const finalParts = reconstructParts(token, cleanW, parts);
-        
-        const count = parts.length;
-        totalLineSyllables += count;
-        
-        return {
-            word: token,
-            syllables: finalParts,
-            count: count
-        };
-    });
+      words.push(word);
+    }
 
     return {
       text: line,
-      syllableCount: totalLineSyllables,
+      syllableCount,
       isHeader,
       isComment,
-      words
+      words,
     };
   });
 };
 
 export const getDocumentStats = (lines: LineStats[]) => {
-    const contentLines = lines.filter(l => !l.isHeader && !l.isComment && l.text.trim().length > 0);
-    const totalSyllables = contentLines.reduce((acc, l) => acc + l.syllableCount, 0);
-    const wordCount = contentLines.reduce((acc, l) => acc + l.words.filter(w => w.count > 0).length, 0);
-    const avgSyllablesPerLine = contentLines.length > 0 ? totalSyllables / contentLines.length : 0;
+  const contentLines = lines.filter(
+    line => !line.isHeader && !line.isComment && line.text.trim().length > 0,
+  );
 
-    return {
-        totalSyllables,
-        wordCount,
-        avgSyllablesPerLine,
-        lines
-    };
+  const totalSyllables = contentLines.reduce((acc, line) => acc + line.syllableCount, 0);
+  const wordCount = contentLines.reduce(
+    (acc, line) => acc + line.words.filter(word => word.count > 0).length,
+    0,
+  );
+  const avgSyllablesPerLine = contentLines.length > 0 ? totalSyllables / contentLines.length : 0;
+
+  return {
+    totalSyllables,
+    wordCount,
+    avgSyllablesPerLine,
+    lines,
+  };
+};
+
+export const __testing = {
+  isSectionHeader,
+  isCommentLine,
+  hyphenateLexicalSegment,
 };
