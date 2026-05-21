@@ -11,12 +11,14 @@ export enum Theme {
 export interface WordStats {
   /** Original token text, including surrounding punctuation. */
   word: string;
-  /** Replacement text used by the editor overlay/decorations. */
+  /** Display text with visible syllable separators. */
   display: string;
   /** Syllable parts for the token's lexical segments. */
   syllables: string[];
   /** Counted syllables for this token. */
   count: number;
+  /** Offsets inside the token where syllable markers should be inserted. */
+  markerOffsets: number[];
   /** Start offset inside the containing line. */
   from: number;
   /** End offset inside the containing line. */

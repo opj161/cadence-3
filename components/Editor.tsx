@@ -6,8 +6,13 @@ import type { LineStats } from '../types';
 import { Theme } from '../types';
 import { createEditorTheme } from '../extensions/editorTheme';
 import { pasteHandler } from '../extensions/pasteHandler';
-import { setSyllableLinesEffect, syllableLinesField } from '../extensions/syllableData';
-import { syllableDecorations } from '../extensions/syllableDecorations';
+import {
+  setShowSyllablesEffect,
+  setSyllableLinesEffect,
+  showSyllablesField,
+  syllableLinesField,
+} from '../extensions/syllableData';
+import { syllableDecorationsField } from '../extensions/syllableDecorations';
 import { syllableGutter } from '../extensions/syllableGutter';
 
 interface EditorProps {
@@ -36,11 +41,12 @@ export const Editor: React.FC<EditorProps> = ({
     }),
     EditorView.lineWrapping,
     syllableLinesField,
+    showSyllablesField,
     syllableGutter,
-    syllableDecorations(showSyllables),
+    syllableDecorationsField,
     pasteHandler,
     keymap.of([]),
-  ], [fontSize, showSyllables, theme]);
+  ], [fontSize, theme]);
 
   useEffect(() => {
     const view = viewRef.current;
@@ -49,9 +55,12 @@ export const Editor: React.FC<EditorProps> = ({
     }
 
     view.dispatch({
-      effects: setSyllableLinesEffect.of(lines),
+      effects: [
+        setSyllableLinesEffect.of(lines),
+        setShowSyllablesEffect.of(showSyllables),
+      ],
     });
-  }, [lines]);
+  }, [lines, showSyllables]);
 
   return (
     <div className="relative flex-1 overflow-hidden bg-white dark:bg-gray-950">
@@ -63,7 +72,12 @@ export const Editor: React.FC<EditorProps> = ({
         onChange={value => setText(value)}
         onCreateEditor={view => {
           viewRef.current = view;
-          view.dispatch({ effects: setSyllableLinesEffect.of(lines) });
+          view.dispatch({
+            effects: [
+              setSyllableLinesEffect.of(lines),
+              setShowSyllablesEffect.of(showSyllables),
+            ],
+          });
         }}
         placeholder="Start writing..."
         basicSetup={{

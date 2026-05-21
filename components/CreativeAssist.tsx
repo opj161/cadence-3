@@ -26,6 +26,7 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
   
   // Auto-scroll to bottom of suggestion as it streams
   const suggestionRef = useRef<HTMLPreElement>(null);
+  const promptRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -38,6 +39,18 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
         suggestionRef.current.scrollTop = suggestionRef.current.scrollHeight;
     }
   }, [suggestion]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const frame = requestAnimationFrame(() => {
+      promptRef.current?.focus();
+    });
+
+    return () => cancelAnimationFrame(frame);
+  }, [isOpen]);
 
   const checkApiKey = async () => {
     if (window.aistudio) {
@@ -71,6 +84,7 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
 
   const handleGenerate = async (type: 'rhyme' | 'continue' | 'custom') => {
     if (isStreaming) return;
+    if (type === 'custom' && !prompt.trim()) return;
     
     // Safety check for API Key before starting
     if (hasApiKey === false) {
@@ -117,15 +131,29 @@ export const CreativeAssist: React.FC<CreativeAssistProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="absolute inset-y-0 right-0 w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl transform transition-transform duration-300 z-30 flex flex-col font-sans">
+    <aside
+      id="creative-assist-panel"
+      role="complementary"
+      aria-labelledby="creative-assist-title"
+      className="absolute inset-y-0 right-0 w-80 bg-white dark:bg-gray-900 border-l border-gray-200 dark:border-gray-800 shadow-2xl transform transition-transform duration-300 z-30 flex flex-col font-sans"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          onClose();
+        }
+      }}
+    >
       
       {/* Header */}
       <div className="p-5 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between bg-gray-50/50 dark:bg-gray-900/50 backdrop-blur-sm shrink-0">
-        <h2 className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
+        <h2 id="creative-assist-title" className="text-sm font-bold uppercase tracking-wider flex items-center gap-2 text-indigo-600 dark:text-indigo-400">
           <Sparkles className="w-4 h-4" />
           Creative Assist
         </h2>
-        <button onClick={onClose} className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors">
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 transition-colors"
+          aria-label="Close Creative Assist"
+        >
           <X className="w-5 h-5" />
         </button>
       </div>
@@ -192,6 +220,7 @@ Configure AI
           </label>
           <div className="flex gap-2">
             <input 
+              ref={promptRef}
               type="text" 
               value={prompt}
               onChange={(e) => setPrompt(e.target.value)}
@@ -241,6 +270,6 @@ Configure AI
       <div className="p-4 border-t border-gray-200 dark:border-gray-800 text-[10px] text-gray-400 text-center font-mono shrink-0">
         AI assist uses Gemini only when safely configured
       </div>
-    </div>
+    </aside>
   );
 };

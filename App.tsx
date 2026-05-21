@@ -72,8 +72,20 @@ export default function App() {
           </div>
           <div className="h-8 w-px bg-gray-200 dark:bg-gray-800" />
           <div className="flex rounded-full border border-gray-200 bg-gray-100 p-1 dark:border-gray-800 dark:bg-gray-900">
-            <button onClick={() => setLanguage(Language.EN)} className={languageButtonClass(Language.EN)}>EN</button>
-            <button onClick={() => setLanguage(Language.DE)} className={languageButtonClass(Language.DE)}>DE</button>
+            <button
+              onClick={() => setLanguage(Language.EN)}
+              className={languageButtonClass(Language.EN)}
+              aria-pressed={language === Language.EN}
+            >
+              EN
+            </button>
+            <button
+              onClick={() => setLanguage(Language.DE)}
+              className={languageButtonClass(Language.DE)}
+              aria-pressed={language === Language.DE}
+            >
+              DE
+            </button>
           </div>
           {languageMismatch && (
             <button
@@ -87,29 +99,51 @@ export default function App() {
 
         <div className="flex items-center gap-3">
           <div className="flex items-center rounded-lg border border-gray-200 bg-gray-100 p-1 dark:border-gray-800 dark:bg-gray-900">
-            <Button variant="ghost" size="sm" onClick={() => setShowSyllables(!showSyllables)} title="Toggle syllable markers">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowSyllables(!showSyllables)}
+              title="Toggle syllable markers"
+              aria-label="Toggle syllable markers"
+              aria-pressed={showSyllables}
+            >
               {showSyllables ? <ToggleRight className="h-5 w-5 text-indigo-500" /> : <ToggleLeft className="h-5 w-5 text-gray-400" />}
             </Button>
             <div className="mx-1 h-4 w-px bg-gray-300 dark:bg-gray-700" />
-            <Button variant="ghost" size="sm" onClick={() => setFontSize(value => Math.max(12, value - 2))} title="Smaller text">
+            <Button variant="ghost" size="sm" onClick={() => setFontSize(value => Math.max(12, value - 2))} title="Smaller text" aria-label="Smaller text">
               <Type className="h-3 w-3" />
             </Button>
             <span className="w-6 text-center font-mono text-xs text-gray-400">{fontSize}</span>
-            <Button variant="ghost" size="sm" onClick={() => setFontSize(value => Math.min(32, value + 2))} title="Larger text">
+            <Button variant="ghost" size="sm" onClick={() => setFontSize(value => Math.min(32, value + 2))} title="Larger text" aria-label="Larger text">
               <Type className="h-4 w-4" />
             </Button>
           </div>
           <div className="mx-1 h-6 w-px bg-gray-200 dark:bg-gray-800" />
-          <Button variant="ghost" size="icon" onClick={() => handleExport('txt')} title="Export TXT">
+          <Button variant="ghost" size="icon" onClick={() => handleExport('txt')} title="Export TXT" aria-label="Export TXT">
             <Download className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setText('')} title="Clear text">
+          <Button variant="ghost" size="icon" onClick={() => setText('')} title="Clear text" aria-label="Clear text">
             <Trash2 className="h-4 w-4 text-gray-600 hover:text-red-500 dark:text-gray-400 dark:hover:text-red-400" />
           </Button>
-          <Button variant="ghost" size="icon" onClick={() => setTheme(prev => prev === Theme.LIGHT ? Theme.DARK : Theme.LIGHT)} title="Toggle theme">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(prev => prev === Theme.LIGHT ? Theme.DARK : Theme.LIGHT)}
+            title="Toggle theme"
+            aria-label="Toggle theme"
+            aria-pressed={theme === Theme.DARK}
+          >
             {theme === Theme.LIGHT ? <Moon className="h-4 w-4 text-gray-600" /> : <Sun className="h-4 w-4 text-gray-400" />}
           </Button>
-          <Button variant="primary" size="sm" className="ml-2 gap-2 shadow-lg shadow-indigo-500/20" onClick={() => setIsAssistOpen(true)}>
+          <Button
+            variant="primary"
+            size="sm"
+            className="ml-2 gap-2 shadow-lg shadow-indigo-500/20"
+            onClick={() => setIsAssistOpen(true)}
+            aria-label="Assist"
+            aria-controls="creative-assist-panel"
+            aria-expanded={isAssistOpen}
+          >
             <Sparkles className="h-4 w-4" />
             <span className="hidden md:inline">Assist</span>
           </Button>

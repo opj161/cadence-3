@@ -67,8 +67,11 @@ export function createEditorTheme(theme: Theme) {
     '.cm-hyphenated-word': {
       color: 'inherit',
     },
-    '.cm-hyphenated-word::selection': {
-      backgroundColor: 'rgb(99 102 241 / 0.28)',
+    '.cm-syllable-marker': {
+      color: isDark ? 'rgb(165 180 252 / 0.88)' : 'rgb(79 70 229 / 0.82)',
+      fontWeight: '600',
+      pointerEvents: 'none',
+      userSelect: 'none',
     },
     '.cm-section-header': {
       color: isDark ? 'rgb(165 180 252)' : 'rgb(79 70 229)',

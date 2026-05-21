@@ -40,6 +40,7 @@ function analyzeToken(token: string, from: number, lang: Language): WordStats {
   let cursor = 0;
   let count = 0;
   const syllables: string[] = [];
+  const markerOffsets: number[] = [];
 
   for (const match of token.matchAll(LEXICAL_SEGMENT_REGEX)) {
     const index = match.index ?? 0;
@@ -52,6 +53,12 @@ function analyzeToken(token: string, from: number, lang: Language): WordStats {
     count += parts.length;
     display += parts.join('·');
 
+    let markerOffset = 0;
+    for (const part of parts.slice(0, -1)) {
+      markerOffset += part.length;
+      markerOffsets.push(index + markerOffset);
+    }
+
     cursor = index + segment.length;
   }
 
@@ -62,6 +69,7 @@ function analyzeToken(token: string, from: number, lang: Language): WordStats {
     display: display || token,
     syllables,
     count,
+    markerOffsets,
     from,
     to: from + token.length,
   };
