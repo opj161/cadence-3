@@ -64,9 +64,6 @@ export function createEditorTheme(theme: Theme) {
       borderLeftColor: 'rgb(99 102 241)',
       borderLeftWidth: '2px',
     },
-    '.cm-hyphenated-word': {
-      color: 'inherit',
-    },
     '.cm-syllable-marker': {
       color: isDark ? 'rgb(165 180 252 / 0.88)' : 'rgb(79 70 229 / 0.82)',
       fontWeight: '600',

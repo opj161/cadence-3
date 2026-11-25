@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef } from 'react';
 import CodeMirror from '@uiw/react-codemirror';
 import type { Extension } from '@codemirror/state';
-import { EditorView, keymap } from '@codemirror/view';
+import { EditorView } from '@codemirror/view';
 import type { LineStats } from '../types';
 import { Theme } from '../types';
 import { createEditorTheme } from '../extensions/editorTheme';
@@ -45,7 +45,6 @@ export const Editor: React.FC<EditorProps> = ({
     syllableGutter,
     syllableDecorationsField,
     pasteHandler,
-    keymap.of([]),
   ], [fontSize, theme]);
 
   useEffect(() => {

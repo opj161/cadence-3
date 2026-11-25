@@ -1,12 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 import { Editor } from './components/Editor';
 import { StatsBar } from './components/StatsBar';
-import { CreativeAssist } from './components/CreativeAssist';
 import { Button } from './components/Button';
-import { analyzeText, detectLanguage, getDocumentStats } from './services/syllableService';
+import {
+  analyzeText,
+  detectLanguage,
+  getDocumentStats,
+  getPatternVersion,
+  loadPatterns,
+  subscribeToPatterns,
+} from './services/syllableService';
 import { applyTheme, persistTheme, resolveInitialTheme } from './services/themeService';
+import { persistText, readStoredText, TEXT_PERSIST_DELAY_MS } from './services/textStorage';
 import { Language, Theme } from './types';
-import { Download, Moon, Sparkles, Sun, ToggleLeft, ToggleRight, Trash2, Type } from 'lucide-react';
+import { Download, Moon, Sun, ToggleLeft, ToggleRight, Trash2, Type } from 'lucide-react';
 
 const DEFAULT_TEXT = `[Strophe 1]\nWir ziehen durch die Strassen\nAtemlos durch die Nacht\n`;
 
@@ -18,21 +25,67 @@ function escapeHtml(value: string): string {
 }
 
 export default function App() {
-  const [text, setText] = useState<string>(DEFAULT_TEXT);
+  const [text, setText] = useState<string>(() => readStoredText() ?? DEFAULT_TEXT);
   const [language, setLanguage] = useState<Language>(Language.DE);
   const [theme, setTheme] = useState<Theme>(() => resolveInitialTheme());
   const [showSyllables, setShowSyllables] = useState<boolean>(true);
   const [fontSize, setFontSize] = useState<number>(16);
-  const [isAssistOpen, setIsAssistOpen] = useState(false);
 
   useEffect(() => {
     applyTheme(theme);
     persistTheme(theme);
   }, [theme]);
 
+  useEffect(() => {
+    document.documentElement.lang = language === Language.DE ? 'de' : 'en';
+  }, [language]);
+
+  // Debounced persistence of the lyrics; flushed when the page is hidden or unloaded.
+  const pendingTextRef = useRef<string | null>(null);
+  const savedTextRef = useRef<string>(text);
+
+  const flushText = useCallback(() => {
+    const pending = pendingTextRef.current;
+    pendingTextRef.current = null;
+    if (pending !== null && pending !== savedTextRef.current) {
+      savedTextRef.current = pending;
+      persistText(pending);
+    }
+  }, []);
+
+  useEffect(() => {
+    pendingTextRef.current = text;
+    const timer = window.setTimeout(flushText, TEXT_PERSIST_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [text, flushText]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flushText();
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', flushText);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', flushText);
+      flushText();
+    };
+  }, [flushText]);
+
+  // Hyphenation patterns stream in after first paint; re-analyse once they land.
+  const patternVersion = useSyncExternalStore(subscribeToPatterns, getPatternVersion, getPatternVersion);
+
+  useEffect(() => {
+    void loadPatterns(language);
+  }, [language]);
+
   const detectedLanguage = useMemo(() => detectLanguage(text), [text]);
   const languageMismatch = text.trim().length > 80 && detectedLanguage !== language;
-  const lineStats = useMemo(() => analyzeText(text, language), [text, language]);
+  const lineStats = useMemo(
+    () => analyzeText(text, language),
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- patternVersion changes the analysis, not its inputs
+    [text, language, patternVersion],
+  );
   const docStats = useMemo(() => getDocumentStats(lineStats), [lineStats]);
 
   const handleExport = (type: 'txt' | 'html') => {
@@ -52,25 +105,20 @@ export default function App() {
     URL.revokeObjectURL(url);
   };
 
-  const handleInsertAssist = (insertion: string) => {
-    setText(prev => prev + (prev.endsWith('\n') ? '' : '\n') + insertion);
-    setIsAssistOpen(false);
-  };
-
   const languageButtonClass = (value: Language) =>
-    `rounded-full px-4 py-1 text-xs font-bold transition-all duration-200 ${language === value
+    `rounded-full px-4 py-1 text-xs max-lg:min-h-8 max-lg:min-w-8 font-bold transition-all duration-200 ${language === value
       ? 'bg-white text-indigo-600 shadow-sm dark:bg-gray-800 dark:text-indigo-400'
       : 'text-gray-500 hover:text-gray-700 dark:text-gray-500 dark:hover:text-gray-300'}`;
 
   return (
     <div className="flex h-screen flex-col overflow-hidden bg-gray-50 font-sans selection:bg-indigo-500/30 dark:bg-gray-950">
-      <header className="z-20 flex h-16 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6 shadow-sm dark:border-gray-800 dark:bg-gray-950 dark:shadow-none">
-        <div className="flex items-center gap-6">
+      <header className="z-20 flex shrink-0 flex-wrap items-center justify-between gap-x-3 gap-y-2 border-b border-gray-200 bg-white px-3 py-2 shadow-sm dark:border-gray-800 dark:bg-gray-950 dark:shadow-none sm:px-6 lg:h-16 lg:flex-nowrap lg:gap-0 lg:py-0">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 sm:gap-6 lg:flex-nowrap">
           <div className="flex flex-col">
             <h1 className="text-xl font-bold tracking-tight text-gray-900 dark:text-gray-100">Cadence</h1>
             <span className="text-[10px] font-bold uppercase tracking-widest text-indigo-500">Studio Edition</span>
           </div>
-          <div className="h-8 w-px bg-gray-200 dark:bg-gray-800" />
+          <div className="hidden h-8 w-px bg-gray-200 dark:bg-gray-800 sm:block" />
           <div className="flex rounded-full border border-gray-200 bg-gray-100 p-1 dark:border-gray-800 dark:bg-gray-900">
             <button
               onClick={() => setLanguage(Language.EN)}
@@ -90,14 +138,14 @@ export default function App() {
           {languageMismatch && (
             <button
               onClick={() => setLanguage(detectedLanguage)}
-              className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+              className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 max-lg:min-h-8 text-xs font-semibold text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
             >
               Looks like {detectedLanguage}; switch?
             </button>
           )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex w-full flex-wrap items-center justify-between gap-1 sm:w-auto sm:justify-end sm:gap-3">
           <div className="flex items-center rounded-lg border border-gray-200 bg-gray-100 p-1 dark:border-gray-800 dark:bg-gray-900">
             <Button
               variant="ghost"
@@ -118,7 +166,7 @@ export default function App() {
               <Type className="h-4 w-4" />
             </Button>
           </div>
-          <div className="mx-1 h-6 w-px bg-gray-200 dark:bg-gray-800" />
+          <div className="mx-1 hidden h-6 w-px bg-gray-200 dark:bg-gray-800 sm:block" />
           <Button variant="ghost" size="icon" onClick={() => handleExport('txt')} title="Export TXT" aria-label="Export TXT">
             <Download className="h-4 w-4 text-gray-600 dark:text-gray-400" />
           </Button>
@@ -135,24 +183,11 @@ export default function App() {
           >
             {theme === Theme.LIGHT ? <Moon className="h-4 w-4 text-gray-600" /> : <Sun className="h-4 w-4 text-gray-400" />}
           </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            className="ml-2 gap-2 shadow-lg shadow-indigo-500/20"
-            onClick={() => setIsAssistOpen(true)}
-            aria-label="Assist"
-            aria-controls="creative-assist-panel"
-            aria-expanded={isAssistOpen}
-          >
-            <Sparkles className="h-4 w-4" />
-            <span className="hidden md:inline">Assist</span>
-          </Button>
         </div>
       </header>
 
       <main className="relative flex flex-1 overflow-hidden">
         <Editor text={text} setText={setText} lines={lineStats} showSyllables={showSyllables} fontSize={fontSize} theme={theme} />
-        <CreativeAssist isOpen={isAssistOpen} onClose={() => setIsAssistOpen(false)} contextText={text} language={language} onInsert={handleInsertAssist} />
       </main>
 
       <StatsBar stats={docStats} />

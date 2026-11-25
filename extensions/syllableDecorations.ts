@@ -3,8 +3,6 @@ import { Decoration, type DecorationSet, EditorView, WidgetType } from '@codemir
 import { setShowSyllablesEffect, setSyllableLinesEffect, showSyllablesField, syllableLinesField } from './syllableData';
 import type { LineStats } from '../types';
 
-const hyphenatedWordMark = Decoration.mark({ class: 'cm-hyphenated-word' });
-
 class SyllableMarkerWidget extends WidgetType {
   constructor(private readonly marker: string) {
     super();
@@ -47,13 +45,6 @@ function buildDecorations(doc: import('@codemirror/state').Text, lines: LineStat
     for (const word of stats.words) {
       if (word.markerOffsets.length === 0) {
         continue;
-      }
-
-      const from = cmLine.from + word.from;
-      const to = cmLine.from + word.to;
-
-      if (from < to && to <= cmLine.to) {
-        decorations.push(hyphenatedWordMark.range(from, to));
       }
 
       for (const markerOffset of word.markerOffsets) {

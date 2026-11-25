@@ -11,11 +11,9 @@ export enum Theme {
 export interface WordStats {
   /** Original token text, including surrounding punctuation. */
   word: string;
-  /** Display text with visible syllable separators. */
-  display: string;
   /** Syllable parts for the token's lexical segments. */
   syllables: string[];
-  /** Counted syllables for this token. */
+  /** Counted syllables for this token; may exceed `syllables.length` in English. */
   count: number;
   /** Offsets inside the token where syllable markers should be inserted. */
   markerOffsets: number[];
@@ -38,19 +36,4 @@ export interface DocumentStats {
   totalSyllables: number;
   avgSyllablesPerLine: number;
   lines: LineStats[];
-}
-
-export interface GeminiResponse {
-  text: string;
-}
-
-declare global {
-  interface AIStudio {
-    hasSelectedApiKey(): Promise<boolean>;
-    openSelectKey(): Promise<void>;
-  }
-
-  interface Window {
-    aistudio?: AIStudio;
-  }
 }

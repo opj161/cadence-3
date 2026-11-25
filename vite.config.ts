@@ -21,7 +21,9 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks: {
-          'react-vendor': ['react', 'react-dom'],
+          // react-dom/client is the module the app actually imports; without it
+          // React ends up in the entry chunk and this split does nothing.
+          'react-vendor': ['react', 'react/jsx-runtime', 'react-dom', 'react-dom/client'],
           codemirror: ['@codemirror/state', '@codemirror/view', '@codemirror/language', '@uiw/react-codemirror'],
         },
       },

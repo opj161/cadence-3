@@ -1,7 +1,8 @@
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 import { THEME_STORAGE_KEY } from './services/themeService';
+import { TEXT_PERSIST_DELAY_MS, TEXT_STORAGE_KEY } from './services/textStorage';
 
 describe('App theme integration', () => {
   beforeEach(() => {
@@ -58,21 +59,21 @@ describe('App theme integration', () => {
 
     await waitFor(() => {
       expect(container.querySelector('.cm-section-header')).toBeInTheDocument();
-      expect(container.querySelectorAll('.cm-hyphenated-word, .cm-syllable-marker').length).toBeGreaterThan(0);
+      expect(container.querySelectorAll('.cm-syllable-marker').length).toBeGreaterThan(0);
     });
 
     fireEvent.click(toggle);
 
     await waitFor(() => {
       expect(container.querySelector('.cm-section-header')).toBeInTheDocument();
-      expect(container.querySelectorAll('.cm-hyphenated-word, .cm-syllable-marker')).toHaveLength(0);
+      expect(container.querySelectorAll('.cm-syllable-marker')).toHaveLength(0);
     });
 
     fireEvent.click(toggle);
 
     await waitFor(() => {
       expect(container.querySelector('.cm-section-header')).toBeInTheDocument();
-      expect(container.querySelectorAll('.cm-hyphenated-word, .cm-syllable-marker').length).toBeGreaterThan(0);
+      expect(container.querySelectorAll('.cm-syllable-marker').length).toBeGreaterThan(0);
     });
   });
 
@@ -89,26 +90,6 @@ describe('App theme integration', () => {
       expect(container.querySelector('[title="Total Word Count"]')).toHaveTextContent(/^0\s*words$/i);
       expect(container.querySelector('[title="Total Syllable Count"]')).toHaveTextContent(/^0\s*syl$/i);
       expect(container.querySelector('[title="Average Syllables per Line"]')).toHaveTextContent(/^0\.0\s*avg$/i);
-    });
-  });
-
-  it('opens and closes Creative Assist with the local API key gate visible when no key is configured', async () => {
-    const { container } = render(<App />);
-
-    const assistButton = screen.getByRole('button', { name: /assist/i });
-    expect(assistButton).toHaveAttribute('aria-expanded', 'false');
-
-    fireEvent.click(assistButton);
-
-    expect(await screen.findByText('Creative Assist')).toBeInTheDocument();
-    expect(screen.getByText('API Key Required')).toBeInTheDocument();
-    expect(assistButton).toHaveAttribute('aria-expanded', 'true');
-
-    fireEvent.click(container.querySelector('button[aria-label="Close Creative Assist"]') as HTMLButtonElement);
-
-    await waitFor(() => {
-      expect(screen.queryByText('Creative Assist')).not.toBeInTheDocument();
-      expect(assistButton).toHaveAttribute('aria-expanded', 'false');
     });
   });
 
@@ -170,5 +151,108 @@ describe('App theme integration', () => {
     expect(exportedLink).toBeDefined();
     expect(exportedLink?.download).toBe('lyrics.txt');
     expect(exportedLink?.href).toBe('blob:lyrics');
+  });
+});
+
+describe('App lyrics persistence', () => {
+  beforeEach(() => {
+    localStorage.clear();
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    localStorage.clear();
+  });
+
+  const wordCount = (container: HTMLElement) => container.querySelector('[title="Total Word Count"]');
+
+  it('restores stored lyrics on mount', () => {
+    localStorage.setItem(TEXT_STORAGE_KEY, 'one two three four five');
+
+    const { container } = render(<App />);
+
+    expect(wordCount(container)).toHaveTextContent(/^5\s*words$/i);
+  });
+
+  it('falls back to the default text when nothing is stored', () => {
+    const { container } = render(<App />);
+
+    expect(wordCount(container)).not.toHaveTextContent(/^0\s*words$/i);
+    expect(wordCount(container)).toHaveTextContent(/^\d+\s*words$/i);
+    expect(localStorage.getItem(TEXT_STORAGE_KEY)).toBeNull();
+  });
+
+  it('keeps an empty stored string empty instead of restoring the default text', () => {
+    localStorage.setItem(TEXT_STORAGE_KEY, '');
+
+    const { container } = render(<App />);
+
+    expect(wordCount(container)).toHaveTextContent(/^0\s*words$/i);
+  });
+
+  it('debounces writes and then stores the new text', () => {
+    vi.useFakeTimers();
+    const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /clear text/i }));
+    act(() => {
+      vi.advanceTimersByTime(TEXT_PERSIST_DELAY_MS - 50);
+    });
+    expect(setItemSpy.mock.calls.filter(([key]) => key === TEXT_STORAGE_KEY)).toHaveLength(0);
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+    expect(localStorage.getItem(TEXT_STORAGE_KEY)).toBe('');
+  });
+
+  it('flushes pending text when the page is hidden', () => {
+    vi.useFakeTimers();
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /clear text/i }));
+    expect(localStorage.getItem(TEXT_STORAGE_KEY)).toBeNull();
+
+    window.dispatchEvent(new Event('pagehide'));
+    expect(localStorage.getItem(TEXT_STORAGE_KEY)).toBe('');
+  });
+
+  it('does not crash when writing to storage throws', () => {
+    vi.useFakeTimers();
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('quota exceeded', 'QuotaExceededError');
+    });
+    render(<App />);
+
+    fireEvent.click(screen.getByRole('button', { name: /clear text/i }));
+    expect(() => {
+      act(() => {
+        vi.advanceTimersByTime(TEXT_PERSIST_DELAY_MS + 50);
+      });
+    }).not.toThrow();
+
+    expect(screen.getByRole('button', { name: 'EN' })).toBeInTheDocument();
+  });
+});
+
+describe('App document language', () => {
+  afterEach(() => {
+    cleanup();
+    localStorage.clear();
+  });
+
+  it('keeps <html lang> in sync with the EN/DE toggle', () => {
+    render(<App />);
+
+    expect(document.documentElement.lang).toBe('de');
+
+    fireEvent.click(screen.getByRole('button', { name: 'EN' }));
+    expect(document.documentElement.lang).toBe('en');
+
+    fireEvent.click(screen.getByRole('button', { name: 'DE' }));
+    expect(document.documentElement.lang).toBe('de');
   });
 });
